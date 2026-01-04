@@ -107,6 +107,32 @@
             font-size: 1em;
         }
 
+        .radio-group {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: 400;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #7EBDC2;
+        }
+
+        .radio-option span {
+            color: #394F5B;
+            font-size: 0.95em;
+        }
+
         .search-input-group {
             display: flex;
             gap: 12px;
@@ -368,6 +394,79 @@
             font-size: 0.85em;
         }
 
+        .result-multiple {
+            display: none;
+        }
+
+        .result-multiple.active {
+            display: block;
+        }
+
+        .result-multiple h2 {
+            color: #394F5B;
+            font-size: 1.4em;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .packages-table {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #BDDADC;
+            margin-bottom: 20px;
+        }
+
+        .packages-table-header {
+            background: #394F5B;
+            color: white;
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1.5fr;
+            padding: 16px 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .packages-table-row {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1.5fr;
+            padding: 16px 20px;
+            border-bottom: 1px solid #BDDADC;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .packages-table-row:hover {
+            background: rgba(126, 189, 194, 0.05);
+        }
+
+        .packages-table-row:last-child {
+            border-bottom: none;
+        }
+
+        .packages-table-row:nth-child(even) {
+            background: #F8FBFC;
+        }
+
+        .packages-table-row:nth-child(even):hover {
+            background: rgba(126, 189, 194, 0.08);
+        }
+
+        .packages-table-cell {
+            color: #394F5B;
+            font-size: 0.9em;
+            word-break: break-word;
+            display: flex;
+            align-items: center;
+        }
+
+        .package-count {
+            color: #7EBDC2;
+            font-weight: 600;
+            margin-bottom: 16px;
+            font-size: 1em;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 32px 24px;
@@ -410,15 +509,27 @@
         </div>
 
         <div class="search-box">
-            <label for="trackingInput">Ingresa tu número de tracking:</label>
+            <label>Buscar por:</label>
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="tipoBusqueda" value="tracking" checked onchange="cambiarTipoBusqueda()">
+                    <span>Número de Tracking</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="tipoBusqueda" value="nombre" onchange="cambiarTipoBusqueda()">
+                    <span>Nombre del Cliente</span>
+                </label>
+            </div>
+            
+            <label for="searchInput" id="searchLabel">Ingresa tu número de tracking:</label>
             <div class="search-input-group">
                 <input 
                     type="text" 
-                    id="trackingInput" 
+                    id="searchInput" 
                     placeholder="Ejemplo: 1Z12345W987654321"
                     autocomplete="off"
                 >
-                <button class="btn-search" onclick="buscarTracking()">
+                <button class="btn-search" onclick="buscar()">
                     <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
@@ -459,6 +570,10 @@
                             <span class="status-badge" id="statusBadge"></span>
                         </div>
                     </div>
+                    <div class="result-row">
+                        <div class="result-label">Última actualización</div>
+                        <div class="result-value" id="lastUpdate"></div>
+                    </div>
                 </div>
 
                 <div class="message-box" id="statusMessage"></div>
@@ -469,8 +584,26 @@
             </div>
         </div>
 
+        <div class="result-multiple" id="resultMultiple">
+            <h2>📦 Paquetes Encontrados</h2>
+            <p class="package-count" id="packageCount"></p>
+            
+            <div class="packages-table">
+                <div class="packages-table-header">
+                    <div>Tracking</div>
+                    <div>Estado</div>
+                    <div>Última Actualización</div>
+                </div>
+                <div id="packagesTableBody"></div>
+            </div>
+
+            <button class="btn-new-search" onclick="nuevaBusqueda()">
+                Nueva Búsqueda
+            </button>
+        </div>
+
         <div class="footer">
-            <p>© 2024 Shipper - Tráelo con nosotros</p>
+            <p>© 2026 Shipper - Tráelo con Shipper</p>
         </div>
     </div>
 
@@ -479,23 +612,45 @@
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrLDP9Pel1_bSbG7G5pHG6LF6-VNVMTsdj9GBZLSrYeb4Sf2AU7u5t7N_8V9-dJmT4/exec';
 
         // Permitir buscar con Enter
-        document.getElementById('trackingInput').addEventListener('keypress', function(e) {
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                buscarTracking();
+                buscar();
             }
         });
 
-        // Convertir automáticamente a mayúsculas
-        document.getElementById('trackingInput').addEventListener('input', function(e) {
-            this.value = this.value.toUpperCase();
+        // Convertir automáticamente a mayúsculas solo en modo tracking
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const tipoSeleccionado = document.querySelector('input[name="tipoBusqueda"]:checked').value;
+            if (tipoSeleccionado === 'tracking') {
+                this.value = this.value.toUpperCase();
+            }
         });
 
-        async function buscarTracking() {
-            const trackingInput = document.getElementById('trackingInput');
-            const tracking = trackingInput.value.trim();
+        function cambiarTipoBusqueda() {
+            const tipoSeleccionado = document.querySelector('input[name="tipoBusqueda"]:checked').value;
+            const label = document.getElementById('searchLabel');
+            const input = document.getElementById('searchInput');
+            
+            if (tipoSeleccionado === 'tracking') {
+                label.textContent = 'Ingresa tu número de tracking:';
+                input.placeholder = 'Ejemplo: 1Z12345W987654321';
+                input.value = input.value.toUpperCase();
+            } else {
+                label.textContent = 'Ingresa el nombre del cliente:';
+                input.placeholder = 'Ejemplo: Oscar Medina';
+                input.value = input.value; // Mantener como está
+            }
+            
+            input.focus();
+        }
 
-            if (!tracking) {
-                mostrarError('Por favor ingresa un número de tracking para continuar.');
+        async function buscar() {
+            const searchInput = document.getElementById('searchInput');
+            const valorBusqueda = searchInput.value.trim();
+            const tipoSeleccionado = document.querySelector('input[name="tipoBusqueda"]:checked').value;
+
+            if (!valorBusqueda) {
+                mostrarError('Por favor ingresa un ' + (tipoSeleccionado === 'tracking' ? 'número de tracking' : 'nombre de cliente') + ' para continuar.');
                 return;
             }
 
@@ -503,14 +658,24 @@
             document.getElementById('loading').classList.add('active');
 
             try {
-                const url = `${SCRIPT_URL}?tracking=${encodeURIComponent(tracking)}`;
+                let url;
+                if (tipoSeleccionado === 'tracking') {
+                    url = `${SCRIPT_URL}?tracking=${encodeURIComponent(valorBusqueda.toUpperCase())}&tipo_busqueda=tracking`;
+                } else {
+                    url = `${SCRIPT_URL}?nombre_cliente=${encodeURIComponent(valorBusqueda)}&tipo_busqueda=nombre`;
+                }
+                
                 const response = await fetch(url);
                 const data = await response.json();
 
                 document.getElementById('loading').classList.remove('active');
 
                 if (data.success) {
-                    mostrarResultado(data.data);
+                    if (data.tipo === 'multiple') {
+                        mostrarResultadosMultiples(data);
+                    } else {
+                        mostrarResultado(data.data);
+                    }
                 } else {
                     mostrarError(data.message);
                 }
@@ -527,7 +692,79 @@
             document.getElementById('clientName').textContent = data.nombre_cliente;
             document.getElementById('statusBadge').textContent = data.estado;
             document.getElementById('statusMessage').textContent = data.mensaje;
+            
+            // Formatear y mostrar la fecha de actualización
+            if (data.fecha_actualizacion) {
+                const fecha = new Date(data.fecha_actualizacion);
+                const fechaFormateada = formatearFecha(fecha);
+                document.getElementById('lastUpdate').textContent = fechaFormateada;
+            } else {
+                document.getElementById('lastUpdate').textContent = 'No disponible';
+            }
+            
             document.getElementById('result').classList.add('active');
+        }
+
+        function mostrarResultadosMultiples(data) {
+            const countElement = document.getElementById('packageCount');
+            countElement.textContent = `Se encontraron ${data.cantidad} paquete${data.cantidad > 1 ? 's' : ''} para este cliente:`;
+            
+            const tableBody = document.getElementById('packagesTableBody');
+            tableBody.innerHTML = '';
+            
+            data.data.forEach(paquete => {
+                const row = document.createElement('div');
+                row.className = 'packages-table-row';
+                
+                const tracking = document.createElement('div');
+                tracking.className = 'packages-table-cell';
+                tracking.textContent = paquete.numero_tracking;
+                
+                const estado = document.createElement('div');
+                estado.className = 'packages-table-cell';
+                estado.textContent = paquete.estado;
+                
+                const fecha = document.createElement('div');
+                fecha.className = 'packages-table-cell';
+                if (paquete.fecha_actualizacion) {
+                    const fechaObj = new Date(paquete.fecha_actualizacion);
+                    fecha.textContent = formatearFechaCorta(fechaObj);
+                } else {
+                    fecha.textContent = 'N/A';
+                }
+                
+                row.appendChild(tracking);
+                row.appendChild(estado);
+                row.appendChild(fecha);
+                
+                tableBody.appendChild(row);
+            });
+            
+            document.getElementById('resultMultiple').classList.add('active');
+        }
+        
+        function formatearFecha(fecha) {
+            const opciones = { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            };
+            
+            const fechaStr = fecha.toLocaleString('es-PE', opciones);
+            return fechaStr.replace(',', ' -');
+        }
+
+        function formatearFechaCorta(fecha) {
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const año = fecha.getFullYear();
+            const hora = String(fecha.getHours()).padStart(2, '0');
+            const minuto = String(fecha.getMinutes()).padStart(2, '0');
+            
+            return `${dia}/${mes}/${año} ${hora}:${minuto}`;
         }
 
         function mostrarError(mensaje) {
@@ -537,13 +774,14 @@
 
         function ocultarTodo() {
             document.getElementById('result').classList.remove('active');
+            document.getElementById('resultMultiple').classList.remove('active');
             document.getElementById('error').classList.remove('active');
             document.getElementById('loading').classList.remove('active');
         }
 
         function nuevaBusqueda() {
-            document.getElementById('trackingInput').value = '';
-            document.getElementById('trackingInput').focus();
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchInput').focus();
             ocultarTodo();
         }
     </script>
